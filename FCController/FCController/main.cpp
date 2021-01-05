@@ -19,8 +19,29 @@ int8_t tData[4] = {0, 0, 0, 0};
 
 int main(void)
 {
-    /* Replace with your application code */
-	// 1 Messrunde
+	
+	//INIT Pump timer 1
+	//PWM-frequency: 2kHz
+	//>0% ... >40% Dutycycle
+		
+	
+	//INIT windmill timer 3
+	//PWM frequency: 25kHz
+	//>0% ... >50% Dutycycle
+	
+	
+	//INIT Usonictimer 4
+	// 30cm max. depth of water => 60cm way of sound => ca. 2ms duration
+	// 16Bit timer with prescaler 1 (16MHz clock) => after ca. 4ms Overflow => cancel meassurement and write 0 to array
+	// 
+
+	//INIT LED Timer 5
+	// minValue for 1% (e.g.0.05s per LED)
+	// maxValue for 100% (e.g. 0.5s per LED)
+	// PWM Frequency >200Hz
+	// Both directions with outputs A0 ... A15
+	// two pins for MOSFETs to select the LED bank
+	
     while (1) 
     {
 		// *** TESTING *** //
@@ -49,6 +70,7 @@ int main(void)
 				rData[idx] = SPDR;
 			}
 		}
+		
 		
 		//TODO: Pumpe setzen
 		//TODO: Windrad setzen
