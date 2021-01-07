@@ -8,6 +8,16 @@
 #include <avr/io.h>
 #include "general.h"
 
+#define DD_MISO    PB3
+
+#define DD_MOSI    PB2
+
+#define DD_SCK     PB1
+
+#define DD_SS      PB0
+
+#define DDR_SPI    DDRB
+
 int8_t rData[2] = {0, 0};
 	
 	
@@ -41,6 +51,12 @@ int main(void)
 	// PWM Frequency >200Hz
 	// Both directions with outputs A0 ... A15
 	// two pins for MOSFETs to select the LED bank
+	
+	
+	
+	DDR_SPI |= (1<<DD_MISO);
+	// Enable SPI
+	SPCR |= (1<<SPE)|(1<<SPR0);
 	
     while (1) 
     {
