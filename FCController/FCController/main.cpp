@@ -162,6 +162,10 @@ int main(void)
 			if (idx < 2) {
 				// Read register
 				rData[idx] = SPDR;
+				if (rData[idx] < 0) // to send values back next time transmitting
+					tData[idx + 4] = (uint8_t)(rData[idx] + 100);	// transform to uint8 -> see declaration
+				else
+					tData[idx + 4] = (uint8_t)rData[idx];			// use positive value
 			}
 		}
 		

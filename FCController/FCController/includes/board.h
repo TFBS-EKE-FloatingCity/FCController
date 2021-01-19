@@ -19,10 +19,6 @@ volatile uint8_t waiting = 0;
 volatile int8_t rData[2] = {0, 0};
 volatile uint16_t leds = 0;
 
-// Inside sensor (0 - 300) -> too high for int8 (-128 to +127)! even for uint8 (0 .. 255)
-// Outside sensor (0 - 300) -> see above
-// Current pump speed (-100 - 100) -> not needed because raspberry already knows the values
-// Current windmill speed (0 - 100) -> see above
 // new settings:
 // byte [0] Inside usonic MSB
 // byte [1] Inside usonic LSB
