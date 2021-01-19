@@ -11,6 +11,8 @@
 
 
 
+
+
 int main(void)
 {
 	
@@ -70,6 +72,12 @@ int main(void)
 	sei();
 	
 	
+	
+	
+	DDR_SPI |= (1<<DD_MISO);
+	// Enable SPI
+	SPCR |= (1<<SPE)|(1<<SPR0);
+	
     while (1) 
     {
 		
@@ -107,7 +115,7 @@ int main(void)
 		//                           USonic Messung
 		//////////////////////////////////////////////////////////////////////////
 		// Procedure for inner sensor: (same for outer sensor)
-		// 1. set trigger for 20µs
+		// 1. set trigger for 20ï¿½s
 		// 2. activate extern interrupt sensing for INT0 and wait for change
 		// 3. in ISR if rising edge start Timer 4
 		// 4. wait for falling edge on INT0
@@ -142,7 +150,7 @@ int main(void)
 		/*						4 Bytes aus tData senden                        */
 		/************************************************************************/
 		// We will send 4 bytes so count up to 3
-		for (uint8_t idx = 0; idx < 4; idx++) {
+		for (uint8_t idx = 0; idx < 6; idx++) {
 					
 			// Write 1st byte into register
 			SPDR = tData[idx];

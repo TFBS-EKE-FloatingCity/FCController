@@ -28,7 +28,19 @@ volatile uint16_t leds = 0;
 // byte [1] Inside usonic LSB
 // byte [2] Outside usonic MSB
 // byte [3] outside usonic LSB
-volatile uint8_t tData[4] = {0, 0, 0, 0};
+// byte [4] pump/gen speed offset 100 (0 => -100% --> 200 => 100%)
+// byte [5] windmill speed in % (0 .. 100%)
+volatile uint8_t tData[6] = {0, 0, 0, 0, 0, 0};
+
+
+//////////////////////////////////////////////////////////////////////////
+//					SPI configurations									//
+//////////////////////////////////////////////////////////////////////////
+#define DD_MISO    PB3
+#define DD_MOSI    PB2
+#define DD_SCK     PB1
+#define DD_SS      PB0
+#define DDR_SPI    DDRB
 
 
 //////////////////////////////////////////////////////////////////////////
