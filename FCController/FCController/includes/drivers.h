@@ -10,7 +10,7 @@
 #define DRIVERS_H_
 
 #include "../ISRs/isrs.h"
-
+#include "avr/wdt.h"
 
 
 #endif /* DRIVERS_H_ */

@@ -9,12 +9,14 @@
 #include "general.h"
 #include <util/delay.h>
 
-
-
-
-
 int main(void)
 {
+	//INIT Watchdog
+	//start Watchdog and set Watchdog LED (clear before entering while())
+	DDRB |= (1 << WD_LED);
+	PORTB |= ( 1 << WD_LED);		// set LED on
+	wdt_reset();
+	wdt_enable(WDTO_8S);			// start WDT TOF=8s
 	
 	//INIT Pump timer 1
 	//PWM-frequency: 2kHz
@@ -77,10 +79,10 @@ int main(void)
 	DDR_SPI |= (1<<DD_MISO);
 	// Enable SPI
 	SPCR |= (1<<SPE)|(1<<SPR0);
-	
+	PORTB &= ~(1 << WD_LED);			// clear init LED 
     while (1) 
     {
-		
+		wdt_reset();					// reset WDT => Counter = 0 
 		//////////////////////////////////////////////////////////////////////////
 		//                 calc pumps + LED Running Light
 		//////////////////////////////////////////////////////////////////////////
