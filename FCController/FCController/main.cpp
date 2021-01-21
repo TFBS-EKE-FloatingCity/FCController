@@ -13,7 +13,7 @@ int main(void)
 {
 	//INIT Watchdog
 	//start Watchdog and set Watchdog LED (clear before entering while())
-	DDRB |= (1 << WD_LED);
+	DDRB |= (1 << WD_LED) | (1 << LED_WindMill);
 	PORTB |= ( 1 << WD_LED);		// set LED on
 	wdt_reset();
 	wdt_enable(WDTO_8S);			// start WDT TOF=8s
@@ -82,6 +82,7 @@ int main(void)
 	PORTB &= ~(1 << WD_LED);			// clear init LED 
     while (1) 
     {
+		PORTB |= (1 << LED_WindMill);
 		wdt_reset();					// reset WDT => Counter = 0 
 		//////////////////////////////////////////////////////////////////////////
 		//                 calc pumps + LED Running Light
@@ -146,7 +147,7 @@ int main(void)
 		
 		TCCR5B |= (1 << CS50) | (1 << CS51);	// start LED Timer	
 		EIMSK |= (1 << INT2);					// enable !SS interupt when !SS is activated (falling edge)
-		
+		PORTB &= ~(1 << LED_WindMill);			// turn out WindMill flash LED
 		/************************************************************************/
 		/*			   2 Bytes empfangen und in rData schreiben                 */
 		/*						4 Bytes aus tData senden                        */

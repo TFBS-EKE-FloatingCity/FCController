@@ -28,11 +28,6 @@ volatile uint16_t leds = 0;
 // byte [5] windmill speed in % (0 .. 100%)
 volatile uint8_t tData[6] = {0, 0, 0, 0, 0, 0};
 
-//////////////////////////////////////////////////////////////////////////
-//					Watchdog LED 
-//////////////////////////////////////////////////////////////////////////
-#define WD_LED		PB7
-
 
 //////////////////////////////////////////////////////////////////////////
 //					SPI configurations									//
@@ -48,8 +43,10 @@ volatile uint8_t tData[6] = {0, 0, 0, 0, 0, 0};
 //					Pin configurations									//
 //////////////////////////////////////////////////////////////////////////
 
+#define WD_LED			PB7
 #define LED_GENERATOR	PH0
 #define LED_PUMP		PH1
+#define LED_WindMill	PB4
 
 #define US_ECHO_IN		PD0
 #define US_ECHO_OUT		PD1
