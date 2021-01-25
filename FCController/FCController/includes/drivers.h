@@ -9,8 +9,10 @@
 #ifndef DRIVERS_H_
 #define DRIVERS_H_
 
-#include "../ISRs/isrs.h"
-#include "avr/wdt.h"
+#include <stdint.h>
+#include <avr/io.h>
+#include <avr/wdt.h>
 
+#include "../includes/Uart.h"
 
 #endif /* DRIVERS_H_ */

@@ -9,7 +9,7 @@
 #ifndef ISRS_H_
 #define ISRS_H_
 
-#include<avr/interrupt.h>
+#include <avr/interrupt.h>
 #include "../general.h"
 
 // stop Usonic measurement for it took too long
@@ -46,9 +46,9 @@ ISR(INT1_vect) {
 		uint16_t dist = (uint16_t)((((double)((uint32_t)TCNT4 * 343UL) * 0.0625)/2000.0) + 0.5);
 		tData[2] = (dist >> 8);
 		tData[3] = dist;
-		TCNT4 = 0;
+		TCNT4 = 0;	
+		waiting = 0;
 	}
-	waiting = 0;
 }
 
 // !SS falling edge 

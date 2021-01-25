@@ -8,9 +8,27 @@
 #include <avr/io.h>
 #include "general.h"
 #include <util/delay.h>
+#include "ISRs/isrs.h"
+
+
+volatile uint8_t waiting;
+volatile int8_t rData[2];
+volatile uint16_t leds;
+volatile uint8_t tData[6];
+
 
 int main(void)
 {
+	// initialize global variables 
+	waiting = 0;
+	rData[0] = 0;
+	rData[1] = 0;
+	leds = 0;
+	
+	for(uint8_t i = 0; i < 6; i++) {
+		tData[i] = 0;
+	}
+	
 	//INIT Watchdog
 	//start Watchdog and set Watchdog LED (clear before entering while())
 	DDRB |= (1 << WD_LED) | (1 << LED_WindMill);
@@ -24,6 +42,8 @@ int main(void)
 	DDRB |= (1 << PUMP_PWM) | (1 << GENERATOR_PWM);	// PWM pins as output
 	TCCR1A |= (1 << WGM11);
 	TCCR1B |= (1 << WGM12) |( 1 << WGM13);			// FastPWM mode 14
+	TCCR1A |= (1 << COM1A1);						// set OC1A (PB5) as timer1 pwm output (generator)
+	TCCR1A |= (1 << COM1B1);						// set OC1B (PB6) as timer 1 pwm output (pump)
 	ICR1 = PUMP_ICR -1;								// F_PWM = 2kHz at N=1 ==> 100% DutyCycle on OCR
 	OCR1A = 0;										// DutyCyle = 0%
 	OCR1B = 0;										// DutyCycle = 0%
@@ -36,6 +56,7 @@ int main(void)
 	TCCR3A |= (1 << WGM11);
 	TCCR3B |= (1 << WGM12) | (1 << WGM13);		// FastPWM mode 14
 	ICR3 = WM_ICR - 1;							// F_PWM = 2kHz at N=1 ==> 100% DutyCycle on OCR
+	TCCR3A |= (1 << COM3A1);					// set OC3A (PE3) as timer 3 pwm output (windmill)
 	OCR3A = 0;									// DutyCycle = 0%
 	
 	//INIT 2x Usonic timer 4, INT0, INT1, 2xTrigger
@@ -63,18 +84,27 @@ int main(void)
 	DDRK = 0xFF;
 	DDRH |= (1 << LED_GENERATOR) | (1 << LED_PUMP);		// Pins to select LED running light (per MOSFET)
 	TCCR5B |= (1 << WGM52) |( 1 << WGM53);				// CTC mode 12
-	ICR5 = LED_SLOWEST_OCR - 1;							// default value -> must be calculated
+	ICR5 = LED_SLOWEST_ICR - 1;							// default value -> must be calculated
 	TIMSK5 |= (1 << ICIE5);
-
 	
 	EICRA |= ( 1 << ISC21);							// enable INT2 on PD2 for falling edge (connect to !SS pin)
 	
-	TCCR1B |= (1 << CS10);				// start Timer 1 (Pumps) 
-	TCCR3B |= (1 << CS10);				// start Timer 3 (Windmill) 
+	TCCR1B |= (1 << CS10);				// start Timer 1 (Pumps) Prescaler 1
+	TCCR3B |= (1 << CS10);				// start Timer 3 (Windmill) Prescaler 1
 	sei();
 	
-	
-	
+	//////////////////////////////////////////////////////////////////////////
+	//             USART initialisation only for Testing
+	//////////////////////////////////////////////////////////////////////////
+	uartSettings us;
+	DDRE |= (1 << PE1);
+	us.module = uartModule::uart0;
+	us.baud = UartBaudRates::br38400;
+	Uart uart(us);
+	uart.enable();
+	uart.cls();	
+	uart.write((char*)"Start der Messungen\0", true);
+	//................ end test
 	
 	DDR_SPI |= (1<<DD_MISO);
 	// Enable SPI
@@ -88,21 +118,28 @@ int main(void)
 		//                 calc pumps + LED Running Light
 		//////////////////////////////////////////////////////////////////////////
 		uint8_t absData = 0;
-		if(rData[0] < 0) absData = rData[0] * (-1);
-			else absData = rData[0];
+		if(rData[0] < 0) 
+			absData = rData[0] * (-1);
+		else 
+			absData = rData[0];
+			
 		if(rData[0] == 0) {
 			OCR1A = 0;
-			PORTB &= ~((1 << PUMP_PWM) | (1 << GENERATOR_PWM));	
+			PORTH &= ~((1 << LED_PUMP) | (1 << LED_GENERATOR));	
 		} else {
 			if(rData[0] > 0) {	// generator runs
-				PORTB &= ~(1 << PUMP_PWM);		// disable pump leds mosfet
-				PORTB |= (1 << GENERATOR_PWM);	// enable generator leds mosfet
+				PORTH &= ~(1 << LED_PUMP);		// disable pump leds mosfet
+				PORTH |= (1 << LED_GENERATOR);	// enable generator leds mosfet
+				OCR1B = 0;
+				OCR1A = (uint16_t)((((uint32_t)(absData) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
 			} else {
-				PORTB &= ~(1 << GENERATOR_PWM);		// disable pump leds mosfet
-				PORTB |= (1 << PUMP_PWM);			// enable generator leds mosfet
+				PORTH &= ~(1 << LED_PUMP);		// disable pump leds mosfet
+				PORTH |= (1 << LED_GENERATOR);	// enable generator leds mosfet
+				OCR1A = 0;
+				OCR1B = (uint16_t)((((uint32_t)(absData) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
 			}
-			OCR1A = (uint16_t)((((uint32_t)absData * (uint32_t)(PUMP_ICR - PUMP_SLOWEST_OCR))/100) + PUMP_SLOWEST_OCR);
-			ICR5 = (uint16_t)((((uint32_t)absData * (uint32_t)(LED_FASTEST_OCR - LED_SLOWEST_OCR))/100) + LED_SLOWEST_OCR);
+			
+			ICR5 = (uint16_t)((((uint32_t)(100-absData) * (uint32_t)(LED_FASTEST_ICR - LED_SLOWEST_ICR))/100) + LED_FASTEST_ICR);
 		}
 		
 		//////////////////////////////////////////////////////////////////////////
@@ -111,7 +148,7 @@ int main(void)
 		if(rData[1] <= 0) {
 			OCR3A = 0;
 		} else {
-			OCR3A =  (uint16_t)((((uint32_t)rData[1] * (uint32_t)(WM_ICR - WM_SLOWEST_OCR))/100) + WM_SLOWEST_OCR);
+			OCR3A =  (uint16_t)((((uint32_t)rData[1] * (uint32_t)(WM_ICR - WM_FASTEST_OCR))/100) + WM_FASTEST_OCR) - 1;
 		}
 		
 		//////////////////////////////////////////////////////////////////////////
@@ -152,25 +189,62 @@ int main(void)
 		/*			   2 Bytes empfangen und in rData schreiben                 */
 		/*						4 Bytes aus tData senden                        */
 		/************************************************************************/
-		// We will send 4 bytes so count up to 3
-		for (uint8_t idx = 0; idx < 6; idx++) {
-					
-			// Write 1st byte into register
-			SPDR = tData[idx];
-					
-			// Wait for transmission
-			while(!(SPSR & (1<<SPIF)));
-					
-			// Because only the first 2 bytes are real data => check if its the 1st or 2nd byte
-			if (idx < 2) {
-				// Read register
-				rData[idx] = SPDR;
-				if (rData[idx] < 0) // to send values back next time transmitting
-					tData[idx + 4] = (uint8_t)(rData[idx] + 100);	// transform to uint8 -> see declaration
-				else
-					tData[idx + 4] = (uint8_t)rData[idx];			// use positive value
-			}
+		
+		
+		//////////////////////////////////////////////////////////////////////////
+		//             Test: shut down SPI Communication and set values instead
+		//////////////////////////////////////////////////////////////////////////
+		
+		// get Usonic intern and calc rdata[0] => 50 - 150mm => 100 - 0%; 150mm - 300mm => 0 - 100%
+		uint16_t test1 = tData[0];
+		test1 = (test1 << 8) + tData[1];
+
+		
+		// get Usonic extern and calc rdata[1] => 50 - 300mm => 0 - 100%
+		uint16_t test2 = tData[2];
+		test2 = (test2 << 8) + tData[3];
+
+		
+		uart.write((char*)"S1: \0");
+		uart.write((uint16_t)test1);
+		uart.write((char*)"     S2: \0");
+		uart.write((uint16_t)test2, true);		
+		
+		if (test1 > 300) test1 = 300;
+		if (test1 < 50) test1 = 50;
+		if (test1 >= 150) {
+			rData[0] = (int8_t)(((test1 - (uint16_t)150) * (uint16_t)100)/(uint16_t)150);
+			} else if (test1 < 150) {
+			rData[0] = (int8_t)((int8_t)(((uint16_t)test1 - (uint16_t)50)) * (-1));
 		}
+		if(test2 > 300) test2 = 300;
+		if(test2 < 50) test2 = 50;
+		
+		rData[1] = (int8_t)(((test2 - (uint16_t)50)*(uint16_t)100)/(uint16_t)250);
+		
+		_delay_ms(200);
+		//............... end Test section (remove this section when SPI is activated
+		
+		
+		//// We will send 4 bytes so count up to 3
+		//for (uint8_t idx = 0; idx < 6; idx++) {
+					//
+			//// Write 1st byte into register
+			//SPDR = tData[idx];
+					//
+			//// Wait for transmission
+			//while(!(SPSR & (1<<SPIF)));
+					//
+			//// Because only the first 2 bytes are real data => check if its the 1st or 2nd byte
+			//if (idx < 2) {
+				//// Read register
+				//rData[idx] = SPDR;
+				//if (rData[idx] < 0) // to send values back next time transmitting
+					//tData[idx + 4] = (uint8_t)(rData[idx] + 100);	// transform to uint8 -> see declaration
+				//else
+					//tData[idx + 4] = (uint8_t)rData[idx];			// use positive value
+			//}
+		//}
 		
     }
 }
