@@ -182,23 +182,16 @@
     <Compile Include="includes\drivers.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="includes\Uart.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="ISRs\isrs.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="main.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="source\Uartcpp.cpp">
-      <SubType>compile</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ISRs" />
     <Folder Include="includes" />
-    <Folder Include="source" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>

@@ -93,18 +93,6 @@ int main(void)
 	TCCR3B |= (1 << CS10);				// start Timer 3 (Windmill) Prescaler 1
 	sei();
 	
-	//////////////////////////////////////////////////////////////////////////
-	//             USART initialisation only for Testing
-	//////////////////////////////////////////////////////////////////////////
-	uartSettings us;
-	DDRE |= (1 << PE1);
-	us.module = uartModule::uart0;
-	us.baud = UartBaudRates::br38400;
-	Uart uart(us);
-	uart.enable();
-	uart.cls();	
-	uart.write((char*)"Start der Messungen\0", true);
-	//................ end test
 	
 	DDR_SPI |= (1<<DD_MISO);
 	// Enable SPI
@@ -189,62 +177,26 @@ int main(void)
 		/*			   2 Bytes empfangen und in rData schreiben                 */
 		/*						4 Bytes aus tData senden                        */
 		/************************************************************************/
-		
-		
-		//////////////////////////////////////////////////////////////////////////
-		//             Test: shut down SPI Communication and set values instead
-		//////////////////////////////////////////////////////////////////////////
-		
-		// get Usonic intern and calc rdata[0] => 50 - 150mm => 100 - 0%; 150mm - 300mm => 0 - 100%
-		uint16_t test1 = tData[0];
-		test1 = (test1 << 8) + tData[1];
-
-		
-		// get Usonic extern and calc rdata[1] => 50 - 300mm => 0 - 100%
-		uint16_t test2 = tData[2];
-		test2 = (test2 << 8) + tData[3];
-
-		
-		uart.write((char*)"S1: \0");
-		uart.write((uint16_t)test1);
-		uart.write((char*)"     S2: \0");
-		uart.write((uint16_t)test2, true);		
-		
-		if (test1 > 300) test1 = 300;
-		if (test1 < 50) test1 = 50;
-		if (test1 >= 150) {
-			rData[0] = (int8_t)(((test1 - (uint16_t)150) * (uint16_t)100)/(uint16_t)150);
-			} else if (test1 < 150) {
-			rData[0] = (int8_t)((int8_t)(((uint16_t)test1 - (uint16_t)50)) * (-1));
+				
+		// We will send 4 bytes so count up to 3
+		for (uint8_t idx = 0; idx < 6; idx++) {
+					
+			// Write 1st byte into register
+			SPDR = tData[idx];
+					
+			// Wait for transmission
+			while(!(SPSR & (1<<SPIF)));
+					
+			// Because only the first 2 bytes are real data => check if its the 1st or 2nd byte
+			if (idx < 2) {
+				// Read register
+				rData[idx] = SPDR;
+				if (rData[idx] < 0) // to send values back next time transmitting
+					tData[idx + 4] = (uint8_t)(rData[idx] + 100);	// transform to uint8 -> see declaration
+				else
+					tData[idx + 4] = (uint8_t)rData[idx];			// use positive value
+			}
 		}
-		if(test2 > 300) test2 = 300;
-		if(test2 < 50) test2 = 50;
-		
-		rData[1] = (int8_t)(((test2 - (uint16_t)50)*(uint16_t)100)/(uint16_t)250);
-		
-		_delay_ms(200);
-		//............... end Test section (remove this section when SPI is activated
-		
-		
-		//// We will send 4 bytes so count up to 3
-		//for (uint8_t idx = 0; idx < 6; idx++) {
-					//
-			//// Write 1st byte into register
-			//SPDR = tData[idx];
-					//
-			//// Wait for transmission
-			//while(!(SPSR & (1<<SPIF)));
-					//
-			//// Because only the first 2 bytes are real data => check if its the 1st or 2nd byte
-			//if (idx < 2) {
-				//// Read register
-				//rData[idx] = SPDR;
-				//if (rData[idx] < 0) // to send values back next time transmitting
-					//tData[idx + 4] = (uint8_t)(rData[idx] + 100);	// transform to uint8 -> see declaration
-				//else
-					//tData[idx + 4] = (uint8_t)rData[idx];			// use positive value
-			//}
-		//}
 		
     }
 }

@@ -13,6 +13,4 @@
 #include <avr/io.h>
 #include <avr/wdt.h>
 
-#include "../includes/Uart.h"
-
 #endif /* DRIVERS_H_ */
