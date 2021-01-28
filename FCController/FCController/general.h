@@ -16,9 +16,9 @@
  extern volatile uint8_t waiting;
 
 
-// byte [0] is generator(>0) or pump (<0) in %
+// byte [0] is generator(>100) or pump (<100) in %-100 (Values between - 0 and 200 => -100% and 100%)
 // byte [1] is windmill (>0) in %
-extern volatile int8_t rData[2];	
+extern volatile uint8_t rData[2];	
 extern volatile uint16_t leds;
 
 // new settings:

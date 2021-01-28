@@ -12,7 +12,7 @@
 
 
 volatile uint8_t waiting;
-volatile int8_t rData[2];
+volatile uint8_t rData[2];
 volatile uint16_t leds;
 volatile uint8_t tData[6];
 
@@ -105,29 +105,24 @@ int main(void)
 		//////////////////////////////////////////////////////////////////////////
 		//                 calc pumps + LED Running Light
 		//////////////////////////////////////////////////////////////////////////
-		uint8_t absData = 0;
-		if(rData[0] < 0) 
-			absData = rData[0] * (-1);
-		else 
-			absData = rData[0];
 			
 		if(rData[0] == 0) {
 			OCR1A = 0;
 			PORTH &= ~((1 << LED_PUMP) | (1 << LED_GENERATOR));	
 		} else {
-			if(rData[0] > 0) {	// generator runs
+			if(rData[0] > 100) {	// generator runs
 				PORTH &= ~(1 << LED_PUMP);		// disable pump leds mosfet
 				PORTH |= (1 << LED_GENERATOR);	// enable generator leds mosfet
 				OCR1B = 0;
-				OCR1A = (uint16_t)((((uint32_t)(absData) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
+				OCR1A = (uint16_t)((((uint32_t)(rData[0] - 100) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
+				ICR5 = (uint16_t)((((uint32_t)(100-(rData[0] - 100)) * (uint32_t)(LED_FASTEST_ICR - LED_SLOWEST_ICR))/100) + LED_FASTEST_ICR);
 			} else {
 				PORTH &= ~(1 << LED_PUMP);		// disable pump leds mosfet
 				PORTH |= (1 << LED_GENERATOR);	// enable generator leds mosfet
 				OCR1A = 0;
-				OCR1B = (uint16_t)((((uint32_t)(absData) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
-			}
-			
-			ICR5 = (uint16_t)((((uint32_t)(100-absData) * (uint32_t)(LED_FASTEST_ICR - LED_SLOWEST_ICR))/100) + LED_FASTEST_ICR);
+				OCR1B = (uint16_t)((((uint32_t)(100 - rData[0]) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
+				ICR5 = (uint16_t)((((uint32_t)(rData[0]) * (uint32_t)(LED_FASTEST_ICR - LED_SLOWEST_ICR))/100) + LED_FASTEST_ICR);
+			}			
 		}
 		
 		//////////////////////////////////////////////////////////////////////////
@@ -191,10 +186,7 @@ int main(void)
 			if (idx < 2) {
 				// Read register
 				rData[idx] = SPDR;
-				if (rData[idx] < 0) // to send values back next time transmitting
-					tData[idx + 4] = (uint8_t)(rData[idx] + 100);	// transform to uint8 -> see declaration
-				else
-					tData[idx + 4] = (uint8_t)rData[idx];			// use positive value
+				tData[idx + 4] = rData[idx];	// to send values back next time transmitting
 			}
 		}
 		
