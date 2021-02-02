@@ -87,16 +87,16 @@ int main(void)
 	ICR5 = LED_SLOWEST_ICR - 1;							// default value -> must be calculated
 	TIMSK5 |= (1 << ICIE5);
 	
-	EICRA |= ( 1 << ISC21);							// enable INT2 on PD2 for falling edge (connect to !SS pin)
+	EICRA |= ( 1 << ISC21);				// enable INT2 on PD2 for falling edge (connect to !SS pin)
 	
 	TCCR1B |= (1 << CS10);				// start Timer 1 (Pumps) Prescaler 1
 	TCCR3B |= (1 << CS10);				// start Timer 3 (Windmill) Prescaler 1
-	sei();
+	sei();								// enable interrupts global
 	
 	
-	DDR_SPI |= (1<<DD_MISO);
-	// Enable SPI
-	SPCR |= (1<<SPE)|(1<<SPR0);
+	DDR_SPI |= (1<<DD_MISO);			// set MISO Pin to output
+	
+	SPCR |= (1<<SPE)|(1<<SPR0);			// Enable SPI
 	PORTB &= ~(1 << WD_LED);			// clear init LED 
     while (1) 
     {
@@ -164,31 +164,44 @@ int main(void)
 		EIMSK &= ~(1 << INT1);			// deactivate INT1 interrupt 
 		
 		
-		
 		TCCR5B |= (1 << CS50) | (1 << CS51);	// start LED Timer	
 		EIMSK |= (1 << INT2);					// enable !SS interupt when !SS is activated (falling edge)
 		PORTB &= ~(1 << LED_WindMill);			// turn out WindMill flash LED
+		
+		//////////////////////////////////////////////////////////////////////////
+		//							Test - delete when SPI connected
+		
+		
+		uint16_t test = 0;
+		test = (tData[2] << 8);
+		test |= (tData[3]);
+		rData[0] = (uint8_t)(test / 3);
+		if(rData[0]>100) rData[0] = 100;
+		rData[0] = 100 - rData[0];
+		_delay_ms(1000);
+		//////////////////////////  end Test
+		
 		/************************************************************************/
 		/*			   2 Bytes empfangen und in rData schreiben                 */
 		/*						4 Bytes aus tData senden                        */
 		/************************************************************************/
 				
 		// We will send 4 bytes so count up to 3
-		for (uint8_t idx = 0; idx < 6; idx++) {
-					
-			// Write 1st byte into register
-			SPDR = tData[idx];
-					
-			// Wait for transmission
-			while(!(SPSR & (1<<SPIF)));
-					
-			// Because only the first 2 bytes are real data => check if its the 1st or 2nd byte
-			if (idx < 2) {
-				// Read register
-				rData[idx] = SPDR;
-				tData[idx + 4] = rData[idx];	// to send values back next time transmitting
-			}
-		}
+		//for (uint8_t idx = 0; idx < 6; idx++) {
+					//
+			//// Write 1st byte into register
+			//SPDR = tData[idx];
+					//
+			//// Wait for transmission
+			//while(!(SPSR & (1<<SPIF)));
+					//
+			//// Because only the first 2 bytes are real data => check if its the 1st or 2nd byte
+			//if (idx < 2) {
+				//
+				//rData[idx] = SPDR;				// SPI Read register
+				//tData[idx + 4] = rData[idx];	// to send values back next time transmitting
+			//}
+		//}
 		
     }
 }
