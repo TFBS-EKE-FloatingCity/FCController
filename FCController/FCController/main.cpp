@@ -68,7 +68,7 @@ int main(void)
 	TIMSK4 |= (1 << TOIE4);					// set interrupt (measurement takes too long)
 	TCNT4 = 0;								// set counter to 0 
 	EICRA |= (1 << ISC00) | (1 << ISC10);					// configure INT0 on PD0 and INT1 on PD1 to any edge for Sensor 1 and 2
-	DDRJ |= (1 << US_TRIGGER_IN) | (1 << US_TRIGGER_OUT);	// configure PJ2 and PJ3 as Trigger output pins
+	DDRJ |= (1 << US_TRIGGER_IN) | (1 << US_TRIGGER_OUT);	// configure PJ0 and PJ1 as Trigger output pins
 	//EIMSK |= (1 << INT0) or  (1 << INT1);					// activate INT0 and INT1 ISR for Sensor 1 and 2
 	
 
@@ -170,15 +170,13 @@ int main(void)
 		
 		//////////////////////////////////////////////////////////////////////////
 		//							Test - delete when SPI connected
-		
-		
-		uint16_t test = 0;
-		test = (tData[2] << 8);
-		test |= (tData[3]);
-		rData[0] = (uint8_t)(test / 3);
-		if(rData[0]>100) rData[0] = 100;
-		rData[0] = 100 - rData[0];
-		_delay_ms(1000);
+		//uint16_t test = 0;
+		//test = (tData[2] << 8);
+		//test |= (tData[3]);
+		//rData[0] = (uint8_t)(test / 3);
+		//if(rData[0]>100) rData[0] = 100;
+		//rData[0] = 100 - rData[0];
+		//_delay_ms(1000);
 		//////////////////////////  end Test
 		
 		/************************************************************************/
@@ -187,21 +185,21 @@ int main(void)
 		/************************************************************************/
 				
 		// We will send 4 bytes so count up to 3
-		//for (uint8_t idx = 0; idx < 6; idx++) {
-					//
-			//// Write 1st byte into register
-			//SPDR = tData[idx];
-					//
-			//// Wait for transmission
-			//while(!(SPSR & (1<<SPIF)));
-					//
-			//// Because only the first 2 bytes are real data => check if its the 1st or 2nd byte
-			//if (idx < 2) {
-				//
-				//rData[idx] = SPDR;				// SPI Read register
-				//tData[idx + 4] = rData[idx];	// to send values back next time transmitting
-			//}
-		//}
+		for (uint8_t idx = 0; idx < 6; idx++) {
+					
+			// Write 1st byte into register
+			SPDR = tData[idx];
+					
+			// Wait for transmission
+			while(!(SPSR & (1<<SPIF)));
+					
+			// Because only the first 2 bytes are real data => check if its the 1st or 2nd byte
+			if (idx < 2) {
+				
+				rData[idx] = SPDR;				// SPI Read register
+				tData[idx + 4] = rData[idx];	// to send values back next time transmitting
+			}
+		}
 		
     }
 }
