@@ -111,8 +111,8 @@ int main(void)
 			PORTH &= ~((1 << LED_PUMP) | (1 << LED_GENERATOR));	
 		} else {
 			if(rData[0] > 100) {	// generator runs
-				PORTH &= ~(1 << LED_PUMP);		// disable pump leds mosfet
-				PORTH |= (1 << LED_GENERATOR);	// enable generator leds mosfet
+				PORTH |= (1 << LED_PUMP);		// enable pump leds mosfet
+				PORTH &= ~(1 << LED_GENERATOR);	// disable generator leds mosfet
 				OCR1B = 0;
 				OCR1A = (uint16_t)((((uint32_t)(rData[0] - 100) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
 				ICR5 = (uint16_t)((((uint32_t)(100-(rData[0] - 100)) * (uint32_t)(LED_FASTEST_ICR - LED_SLOWEST_ICR))/100) + LED_FASTEST_ICR);
