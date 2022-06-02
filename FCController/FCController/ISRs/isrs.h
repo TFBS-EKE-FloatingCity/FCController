@@ -13,11 +13,11 @@
 #include "../general.h"
 
 // stop Usonic measurement for it took too long
-ISR(TIMER4_OVF_vect) {
-	TCCR4B &= ~(1 << CS40);		// stop timer
-	TCNT4 = 0;					// reset timer value
-	waiting = 0;
-}
+//ISR(TIMER4_OVF_vect) {
+	//TCCR4B &= ~(1 << CS40);		// stop timer
+	//TCNT4 = 0;					// reset timer value
+	//waiting = 0;
+//}
 
 // Usonic measurement (inside)
 // gets called when the level on PD0 changes in every direction
