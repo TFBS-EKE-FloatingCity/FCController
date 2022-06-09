@@ -36,17 +36,19 @@ int main(void)
 	wdt_reset();
 	wdt_enable(WDTO_8S);			// start WDT TOF=8s
 	
+	//------------------------------------------------------------------------------------------------//
 	//INIT Pump timer 1
 	//PWM-frequency: 2kHz
 	//>0% ... >40% Dutycycle
-	DDRB |= (1 << PUMP_PWM) | (1 << GENERATOR_PWM);	// PWM pins as output
-	TCCR1A |= (1 << WGM11);
-	TCCR1B |= (1 << WGM12) |( 1 << WGM13);			// FastPWM mode 14
-	TCCR1A |= (1 << COM1A1);						// set OC1A (PB5) as timer1 pwm output (generator)
-	TCCR1A |= (1 << COM1B1);						// set OC1B (PB6) as timer 1 pwm output (pump)
-	ICR1 = PUMP_ICR -1;								// F_PWM = 2kHz at N=1 ==> 100% DutyCycle on OCR
-	OCR1A = 0;										// DutyCyle = 0%
-	OCR1B = 0;										// DutyCycle = 0%
+    DDRB |= (1 << PUMP_PWM) | (1 << GENERATOR_PWM);	// PWM pins as output
+	//TCCR1A |= (1 << WGM11);
+	//TCCR1B |= (1 << WGM12) |( 1 << WGM13);			// FastPWM mode 14
+	//TCCR1A |= (1 << COM1A1);						// set OC1A (PB5) as timer1 pwm output (generator)
+	//TCCR1A |= (1 << COM1B1);						// set OC1B (PB6) as timer 1 pwm output (pump)
+	//ICR1 = PUMP_ICR -1;								// F_PWM = 2kHz at N=1 ==> 100% DutyCycle on OCR
+	//OCR1A = 0;										// DutyCyle = 0%
+	//OCR1B = 0;										// DutyCycle = 0%
+	//------------------------------------------------------------------------------------------------//
 		
 	
 	//INIT windmill timer 3
@@ -89,7 +91,7 @@ int main(void)
 	
 	EICRA |= ( 1 << ISC21);				// enable INT2 on PD2 for falling edge (connect to !SS pin)
 	
-	TCCR1B |= (1 << CS10);				// start Timer 1 (Pumps) Prescaler 1
+	//TCCR1B |= (1 << CS10);				// start Timer 1 (Pumps) Prescaler 1
 	TCCR3B |= (1 << CS10);				// start Timer 3 (Windmill) Prescaler 1
 	sei();								// enable interrupts global
 	
@@ -113,15 +115,19 @@ int main(void)
 			if(rData[0] > 100) {	// generator runs
 				PORTH |= (1 << LED_PUMP);		// enable pump leds mosfet
 				PORTH &= ~(1 << LED_GENERATOR);	// disable generator leds mosfet
-				OCR1B = 0;
-				OCR1A = (uint16_t)((((uint32_t)(rData[0] - 100) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
+				//OCR1B = 0;
+				//OCR1A = (uint16_t)((((uint32_t)(rData[0] - 100) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
 				ICR5 = (uint16_t)((((uint32_t)(100-(rData[0] - 100)) * (uint32_t)(LED_FASTEST_ICR - LED_SLOWEST_ICR))/100) + LED_FASTEST_ICR);
+				PORTB |= (1 << PB5); //run generator
+				PORTB &= ~(1 << PB6); //stop pump
 			} else {
 				PORTH &= ~(1 << LED_PUMP);		// disable pump leds mosfet
 				PORTH |= (1 << LED_GENERATOR);	// enable generator leds mosfet
-				OCR1A = 0;
-				OCR1B = (uint16_t)((((uint32_t)(100 - rData[0]) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
+				//OCR1A = 0;
+				//OCR1B = (uint16_t)((((uint32_t)(100 - rData[0]) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
 				ICR5 = (uint16_t)((((uint32_t)(rData[0]) * (uint32_t)(LED_FASTEST_ICR - LED_SLOWEST_ICR))/100) + LED_FASTEST_ICR);
+				PORTB &= ~(1 << PB5); //stop generator
+				PORTB |= (1 << PB6); //run pump
 			}			
 		}
 		
