@@ -100,7 +100,7 @@ int main(void)
 	
 	
 	TCCR1B |= (1 << CS10);				// start Timer 1 (Pumps) Prescaler 1
-	TCCR3B |= (1 << CS10);				// start Timer 3 (Windmill) Prescaler 1
+	TCCR3B |= (1 << CS30);				// start Timer 3 (Windmill) Prescaler 1
 	sei();								// enable interrupts global
 	
 	
@@ -126,13 +126,13 @@ int main(void)
 			OCR1B = 0;
 			PORTH &= ~((1 << LED_PUMP) | (1 << LED_GENERATOR));	
 		} else {
-			if(rData[0] > 100) {	// generator runs
+			if(rData[0] > 100) {
 				PORTH |= (1 << LED_PUMP);		// enable pump leds MOSFET
 				PORTH &= ~(1 << LED_GENERATOR);	// disable generator leds MOSFET
 				OCR1B = 0;
 				OCR1A = (uint16_t)((((uint32_t)(rData[0] - 100) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
 				ICR5 = (uint16_t)((((uint32_t)(100-(rData[0] - 100)) * (uint32_t)(LED_FASTEST_ICR - LED_SLOWEST_ICR))/100) + LED_FASTEST_ICR);
-				PORTB |= (1 << PB5); //run generator
+				//PORTB |= (1 << PB5); //run generator
 				PORTB &= ~(1 << PB6); //stop pump
 			} else {
 				PORTH &= ~(1 << LED_PUMP);		// disable pump leds MOSFET
@@ -141,7 +141,7 @@ int main(void)
 				OCR1B = (uint16_t)((((uint32_t)(100 - rData[0]) * (uint32_t)(PUMP_ICR - PUMP_FASTEST_OCR))/100) + PUMP_FASTEST_OCR);
 				ICR5 = (uint16_t)((((uint32_t)(rData[0]) * (uint32_t)(LED_FASTEST_ICR - LED_SLOWEST_ICR))/100) + LED_FASTEST_ICR);
 				PORTB &= ~(1 << PB5); //stop generator
-				PORTB |= (1 << PB6); //run pump
+				//PORTB |= (1 << PB6); //run pump
 			}			
 		}
 		
