@@ -12,14 +12,14 @@
 #include <avr/interrupt.h>
 #include "../general.h"
 
-// stop Usonic measurement for it took too long
-//ISR(TIMER4_OVF_vect) {
-	//TCCR4B &= ~(1 << CS40);		// stop timer
-	//TCNT4 = 0;					// reset timer value
-	//waiting = 0;
-//}
+// stop USonic measurement when it takes too long
+ISR(TIMER4_OVF_vect) {
+	TCCR4B &= ~(1 << CS40);		// stop timer
+	TCNT4 = 0;					// reset timer value
+	waiting = 0;
+}
 
-// Usonic measurement (inside)
+// USonic measurement (inside)
 // gets called when the level on PD0 changes in every direction
 // activate this interrupt only when distance measurement is active!
 ISR(INT0_vect) {
@@ -35,7 +35,7 @@ ISR(INT0_vect) {
 	}
 }
 
-// Usonic measurement (outside)
+// USonic measurement (outside)
 // gets called when the level on PD1 changes in every direction
 // activate this interrupt only when distance measurement is active!
 ISR(INT1_vect) {
@@ -59,7 +59,7 @@ ISR(INT2_vect) {
 }
 
 // LEDs
-// when ICR is reached the next 16Bit LED value is set
+// when ICR has reached the next 16Bit LED value is set
 ISR(TIMER5_CAPT_vect) {
 	leds <<= 1;
 	if(leds < 3) { 
